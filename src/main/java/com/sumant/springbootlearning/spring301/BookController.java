@@ -11,15 +11,6 @@ public class BookController {
     private static Map<Integer, Book> bookRepository = new HashMap<Integer,Book>();
 
     public BookController(){
-
-        Book book = Book.builder()
-                .id(1)
-                .name("Spring Boot")
-                .author("Josh Long")
-                .price(40.5d)
-                .build();
-        bookRepository.put(1, book);
-
     }
 
     @GetMapping ("/books")
@@ -53,4 +44,10 @@ public class BookController {
         return book;
 
     }
+
+    @DeleteMapping("/books/{id}")
+    public void deleteBook(@PathVariable Integer id){
+        bookRepository.remove(id);
+    }
+
 }

@@ -1,7 +1,8 @@
 package com.sumant.springbootlearning.spring301;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.minidev.json.JSONUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,33 @@ public class BookControllerTests {
 
     @Autowired
     ObjectMapper objectMapper;
+
+
+    /**
+     * Now that we have all the CRUD APIs ready we can use them to setup and teardown each test case.
+     * This removes the dependency on ordering of Test Cases.
+     */
+
+    @BeforeEach
+    public void setup() throws Exception {
+
+        Book newBook = Book.builder()
+                .id(1)
+                .name("Spring Boot")
+                .author("Josh Long")
+                .price(40.5d)
+                .build();
+
+        String newBookJson = objectMapper.writeValueAsString(newBook);
+
+        mockMvc.perform( post("/books").content(newBookJson).contentType(MediaType.APPLICATION_JSON) );
+
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        deleteBook(1);
+    }
 
 
     /**
@@ -71,6 +99,8 @@ public class BookControllerTests {
                 .andExpect( jsonPath("$[1].author", is("New Author")))
                 .andExpect( jsonPath("$[1].price", is(10.0), Double.class));
 
+        deleteBook(2);
+
     }
 
     @Test
@@ -98,6 +128,23 @@ public class BookControllerTests {
                 .andExpect( jsonPath("$", hasSize(1)))
                 .andExpect( jsonPath("$[0].price", is(20.0), Double.class));
 
+    }
+
+    @Test
+    public void deleteBook_WillDeleteBook_WithGivenId() throws Exception {
+
+        mockMvc.perform( delete("/books/1") )
+                .andExpect( status().isOk() );
+
+        mockMvc.perform( get("/books") )
+                .andExpect( status().is(200) )
+                .andExpect( jsonPath("$", hasSize(0)));
+
+    }
+
+    private void deleteBook(int id) throws Exception {
+        String bookUrl = "/books/" + id;
+        mockMvc.perform( delete(bookUrl) );
     }
 
 }
