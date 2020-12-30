@@ -1,13 +1,18 @@
 package com.sumant.springbootlearning.spring301;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.minidev.json.JSONUtil;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,6 +21,9 @@ public class BookControllerTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
 
     /**
@@ -35,6 +43,35 @@ public class BookControllerTests {
                 .andExpect( jsonPath("$[0].name", is("Spring Boot")))
                 .andExpect( jsonPath("$[0].author", is("Josh Long")))
                 .andExpect( jsonPath("$[0].price", is(40.5), Double.class));
+    }
+
+    @Test
+    public void postBook_WillCreateBook() throws Exception {
+
+        Book newBook = Book.builder()
+                .name("New Book")
+                .author("New Author")
+                .price(10.0d)
+                .build();
+
+        String newBookJson = objectMapper.writeValueAsString(newBook);
+
+        mockMvc.perform( post("/books").content(newBookJson).contentType(MediaType.APPLICATION_JSON) )
+                .andExpect( status().isOk() )
+                .andExpect( jsonPath("$.name", is("New Book")))
+                .andExpect( jsonPath("$.author", is("New Author")))
+                .andExpect( jsonPath("$.price", is(10.0), Double.class));
+
+        //This is an incomplete test till this point because we are not sure if the newly created book was persiste or not
+        //To verify call the get books and ascertain that
+
+        mockMvc.perform( get("/books") )
+                .andExpect( status().is(200) )
+                .andExpect( jsonPath("$", hasSize(2)))
+                .andExpect( jsonPath("$[1].name", is("New Book")))
+                .andExpect( jsonPath("$[1].author", is("New Author")))
+                .andExpect( jsonPath("$[1].price", is(10.0), Double.class));
+
     }
 
 }
